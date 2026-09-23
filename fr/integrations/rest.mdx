@@ -1,0 +1,54 @@
+---
+title: REST
+description: Appeler une décision depuis n'importe quel client HTTP.
+---
+
+Un endpoint par décision : `POST https://api.branchpilot.ai/v1/decide/{slug}`. Le contrat complet est dans la [référence API](/fr/api/authentication).
+
+## Requête
+
+```json
+{
+  "input": { "email": "anna@acme.com", "message": "Pouvez-vous nous faire un devis pour 40 licences ?" },
+  "options": { "version": 3, "engine": "jev" }
+}
+```
+
+- `input` — le payload attendu par votre décision : un objet correspondant aux champs déclarés, ou du texte libre.
+- `options.version` — optionnel ; exécute cette version au lieu de celle en ligne.
+- `options.engine` — optionnel ; `"jev"` ou `"llm"` pour forcer un moteur sur cet appel.
+
+## Réponse
+
+```json
+{
+  "run_id": "3f0b2c1e-…",
+  "decision": "lead-routing",
+  "version": 3,
+  "status": "ok",
+  "choice": "sales",
+  "probabilities": { "sales": 0.87, "support": 0.09, "spam": 0.04 },
+  "confidence": 0.87,
+  "confidence_source": "calibrated",
+  "engine": "jev",
+  "model": "jev-1.13.0",
+  "latency_ms": 212,
+  "pii_redacted": 1
+}
+```
+
+| Champ | Présent pour | Signification |
+|---|---|---|
+| `status` | tous | `ok`, `uncertain` ou `pending` |
+| `choice` | route | Clé de l'option retenue, ou `__uncertain__` |
+| `score`, `raw_score`, `legend` | score | Score 0–100, position brute sur les niveaux, libellés des niveaux |
+| `labels` | classify | Clés des étiquettes retenues |
+| `probabilities` | tous | Par option, niveau ou étiquette |
+| `confidence`, `confidence_source` | tous | Voir [confiance](/fr/concepts/confidence) |
+| `engine`, `model` | tous | `jev` ou `llm_fallback`, et la version exacte du modèle |
+| `fallback_reason` | secours seulement | Pourquoi le moteur principal n'a pas répondu |
+| `review_url` | pending seulement | Où un humain résout l'exécution |
+
+## Délais
+
+Donnez au moins 10 secondes à votre client HTTP : une décision via Jev se termine en général en moins d'une seconde, mais un secours après un délai dépassé chez Jev peut prendre quelques secondes.

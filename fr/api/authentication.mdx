@@ -1,0 +1,27 @@
+---
+title: Authentification
+description: Clés API, environnements, et où les envoyer.
+---
+
+Créez vos clés dans **Paramètres → Clés API**. Une clé n'est affichée qu'une fois à sa création ; Branch Pilot n'en stocke qu'un hachage. Révoquez toute clé que vous soupçonnez compromise ; les workflows qui l'utilisent s'arrêtent immédiatement.
+
+Envoyez la clé comme jeton Bearer :
+
+```http
+POST /v1/decide/lead-routing HTTP/1.1
+Host: api.branchpilot.ai
+Authorization: Bearer bp_live_8ec3887f…
+Content-Type: application/json
+```
+
+## Clés test et live
+
+Les clés sont créées en **test** (`bp_test_…`) ou en **live** (`bp_live_…`). Elles se comportent de la même façon aujourd'hui : elles appellent les mêmes décisions et comptent dans le même quota. Utilisez-les pour séparer vos environnements dans vos propres outils et les révoquer indépendamment.
+
+## URL de base
+
+| Environnement | URL de base |
+|---|---|
+| Production | `https://api.branchpilot.ai/v1` |
+
+Les requêtes sont limitées à 128 Ko. Les clés sont liées à votre compte ; il n'y a pas de périmètre par clé dans cette version.

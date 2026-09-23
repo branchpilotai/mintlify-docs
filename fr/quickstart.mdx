@@ -1,0 +1,59 @@
+---
+title: Démarrage rapide
+description: Créer une décision à partir d'un template, la tester et l'appeler depuis votre workflow — en cinq minutes.
+---
+
+<Steps>
+  <Step title="Créez un compte">
+    Rendez-vous sur [app.branchpilot.ai](https://app.branchpilot.ai/login) et connectez-vous par lien magique. Votre compte est créé à la première connexion, avec 100 décisions gratuites par mois et sans carte bancaire.
+  </Step>
+  <Step title="Clonez un template">
+    Ouvrez **Templates** et choisissez-en un — *Routage de leads* est un bon premier choix. Branch Pilot crée la décision, sa version brouillon et ses cas de test en un clic.
+  </Step>
+  <Step title="Exécutez les cas de test">
+    Dans la décision, ouvrez l'onglet **Tests** et cliquez sur **Tout exécuter**. Chaque cas est envoyé au moteur et comparé à son résultat attendu. Ajustez les descriptions des options dans l'**Éditeur** si quelque chose ne route pas comme vous le voulez, puis relancez.
+  </Step>
+  <Step title="Publiez">
+    Cliquez sur **Publier**. Le brouillon devient la version en ligne servie par l'endpoint. Publier à nouveau plus tard crée une nouvelle version ; la précédente reste disponible pour un retour arrière.
+  </Step>
+  <Step title="Créez une clé API">
+    Dans **Paramètres → Clés API**, créez une clé. Elle n'est affichée qu'une fois : copiez-la dans les identifiants de votre workflow.
+  </Step>
+  <Step title="Appelez l'endpoint">
+    <CodeGroup>
+    ```bash curl
+    curl -X POST https://api.branchpilot.ai/v1/decide/lead-routing \
+      -H "Authorization: Bearer bp_live_VOTRE_CLE" \
+      -H "Content-Type: application/json" \
+      -d '{"input": {"email": "anna@acme.com", "message": "Pouvez-vous nous faire un devis pour 40 licences ?"}}'
+    ```
+    ```javascript Node.js
+    const response = await fetch('https://api.branchpilot.ai/v1/decide/lead-routing', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.BRANCH_PILOT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ input: { email: 'anna@acme.com', message: 'Pouvez-vous nous faire un devis pour 40 licences ?' } }),
+    })
+    const decision = await response.json()
+    // decision.choice === 'sales'
+    ```
+    ```python Python
+    import os, requests
+
+    r = requests.post(
+        "https://api.branchpilot.ai/v1/decide/lead-routing",
+        headers={"Authorization": f"Bearer {os.environ['BRANCH_PILOT_KEY']}"},
+        json={"input": {"email": "anna@acme.com", "message": "Pouvez-vous nous faire un devis pour 40 licences ?"}},
+    )
+    decision = r.json()
+    # decision["choice"] == "sales"
+    ```
+    </CodeGroup>
+  </Step>
+  <Step title="Branchez sur la réponse">
+    Utilisez `choice` (ou `score`, ou `labels`) dans le routeur de votre workflow. Traitez `status: "uncertain"` comme une branche à part entière, ou envoyez-le dans la [file de revue](/fr/concepts/confidence).
+  </Step>
+</Steps>
+
+<Tip>
+Chaque appel depuis le playground, le lanceur de tests ou l'API compte pour une décision, quel que soit son type. Le tableau de bord affiche votre consommation sur la période et vous alerte à 80 % et 100 % de votre quota.
+</Tip>

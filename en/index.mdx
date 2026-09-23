@@ -1,0 +1,46 @@
+---
+title: Introduction
+description: Branch Pilot is the AI decision layer for workflows — route, score and classify from Make, n8n or code, with calibrated probabilities and typed answers.
+---
+
+Every branch in an automation is a decision: which team gets this lead, how urgent is this ticket, which topics does this message cover. Branch Pilot turns each of those into a **decision endpoint** you define without code, test with real payloads, and call from your workflow.
+
+## What you get back
+
+A typed answer, never free text:
+
+```json
+{
+  "status": "ok",
+  "choice": "sales",
+  "probabilities": { "sales": 0.87, "support": 0.09, "spam": 0.04 },
+  "confidence": 0.87,
+  "engine": "jev",
+  "latency_ms": 212
+}
+```
+
+- **Route** decisions pick one option among up to 255.
+- **Score** decisions return a 0–100 score over ordered levels.
+- **Classify** decisions return every label whose probability reaches its threshold.
+
+## How it works
+
+Branch Pilot runs on **Jev**, a System One model by TypeSafe AI. Unlike a language model, Jev does not generate text: it evaluates your options in parallel and returns calibrated probabilities. It cannot produce a malformed answer. When Jev is unavailable, Branch Pilot falls back to Mistral with the same typed schema, and the response tells you which engine answered.
+
+Before any model call, personal data in your payload is replaced by neutral tokens. Only the pseudonymized payload is sent to the engines and kept in your history. [Read how pseudonymization works](/en/concepts/pseudonymization).
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/en/quickstart">
+    Your first decision in five minutes, from a template to a curl call.
+  </Card>
+  <Card title="Decisions" icon="code-branch" href="/en/concepts/decisions">
+    Route, score and classify: what each type expects and returns.
+  </Card>
+  <Card title="Confidence" icon="gauge" href="/en/concepts/confidence">
+    Thresholds, the uncertain branch and the human review queue.
+  </Card>
+  <Card title="API reference" icon="terminal" href="/en/api/authentication">
+    Authentication, request and response formats, errors.
+  </Card>
+</CardGroup>

@@ -1,0 +1,59 @@
+---
+title: Quickstart
+description: Create a decision from a template, test it, and call it from your workflow — in five minutes.
+---
+
+<Steps>
+  <Step title="Create an account">
+    Go to [app.branchpilot.ai](https://app.branchpilot.ai/login) and sign in with a magic link. Your account is created on first sign-in, with 100 free decisions per month and no card.
+  </Step>
+  <Step title="Clone a template">
+    Open **Templates** and pick one — *Lead routing* is a good first choice. Branch Pilot creates the decision, its draft version and its test cases in one click.
+  </Step>
+  <Step title="Run the test cases">
+    In the decision, open the **Tests** tab and click **Run all**. Each case is sent to the engine and compared with its expected result. Adjust the option descriptions in the **Editor** if something does not route the way you want, then run again.
+  </Step>
+  <Step title="Publish">
+    Click **Publish**. The draft becomes the live version served by the endpoint. Publishing again later creates a new version; the previous one stays available for rollback.
+  </Step>
+  <Step title="Create an API key">
+    In **Settings → API keys**, create a key. It is shown once: copy it into your workflow's credentials.
+  </Step>
+  <Step title="Call the endpoint">
+    <CodeGroup>
+    ```bash curl
+    curl -X POST https://api.branchpilot.ai/v1/decide/lead-routing \
+      -H "Authorization: Bearer bp_live_YOUR_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{"input": {"email": "anna@acme.com", "message": "Could we get a quote for 40 seats?"}}'
+    ```
+    ```javascript Node.js
+    const response = await fetch('https://api.branchpilot.ai/v1/decide/lead-routing', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.BRANCH_PILOT_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ input: { email: 'anna@acme.com', message: 'Could we get a quote for 40 seats?' } }),
+    })
+    const decision = await response.json()
+    // decision.choice === 'sales'
+    ```
+    ```python Python
+    import os, requests
+
+    r = requests.post(
+        "https://api.branchpilot.ai/v1/decide/lead-routing",
+        headers={"Authorization": f"Bearer {os.environ['BRANCH_PILOT_KEY']}"},
+        json={"input": {"email": "anna@acme.com", "message": "Could we get a quote for 40 seats?"}},
+    )
+    decision = r.json()
+    # decision["choice"] == "sales"
+    ```
+    </CodeGroup>
+  </Step>
+  <Step title="Branch on the answer">
+    Use `choice` (or `score`, or `labels`) in your workflow's router. Handle `status: "uncertain"` as its own branch, or send it to the [review queue](/en/concepts/confidence).
+  </Step>
+</Steps>
+
+<Tip>
+Every call from the playground, the test runner or the API counts as one decision, whatever its type. The dashboard shows your usage for the period and alerts you at 80% and 100% of your quota.
+</Tip>

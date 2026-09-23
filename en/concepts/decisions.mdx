@@ -1,0 +1,66 @@
+---
+title: Decisions
+description: The three decision types — route, score, classify — and how to define them.
+---
+
+A decision is a closed question your workflow asks Branch Pilot. You define it in the editor: what the workflow sends (the **context**), the **question** asked to the engine, and the **options** it can answer with.
+
+## Context
+
+Describe what your workflow will send, and optionally declare fields:
+
+| Setting | Effect |
+|---|---|
+| Field name and type | The payload is validated; a missing required field or a wrong type returns `400 invalid_payload` with the problems listed. |
+| **PII** | The field is replaced by a token before any model call, and its value is also replaced wherever it appears in free text. See [pseudonymization](/en/concepts/pseudonymization). |
+| Example payload | Pre-fills the playground and the test-case dialog. |
+
+If you declare no field, any payload is accepted as is: an object, a string, or an array.
+
+## Route
+
+Picks **one** option among 2 to 255. Each option has a key, returned to your workflow, and a description the engine evaluates.
+
+```text
+sales      Wants to buy, asks for pricing, a quote, a demo or a trial.
+support    Existing customer with a problem, a bug, a login or billing issue.
+spam       Unsolicited offers, SEO or link building, irrelevant content.
+```
+
+Response: `choice`, `probabilities` (one per option, summing to 1) and `confidence`.
+
+<Tip>Add an `other` or `none` option when the list may not cover every input. It gives the engine somewhere to put ambiguous cases instead of forcing a wrong branch.</Tip>
+
+## Score
+
+Returns a **0–100 score** over 2 to 10 ordered levels you describe, from lowest to highest.
+
+```text
+0  Cold       Curious, student, no budget, vague or off-topic.
+1  Lukewarm   Interested but no timeline, small team or unclear need.
+2  Warm       Clear need, relevant role, mentions timeline or team.
+3  Hot        Decision maker with budget, urgency and a concrete use case.
+```
+
+The engine returns a probability per level. `raw_score` is the weighted position on the level scale (for example 2.4), `score` is that position remapped to 0–100, and `legend` maps level indexes to their labels.
+
+## Classify
+
+Returns **every label** whose probability reaches its threshold — several at once, or none. Each label has a key, a description and an optional threshold (default 0.5, adjustable per decision).
+
+```text
+billing          Invoices, payments, charges, refunds or plans.
+technical        A bug, an error, something not working.
+feature_request  Asks for a new feature or improvement.
+```
+
+Response: `labels` (the retained keys) and `probabilities` (one per label, independent of each other).
+
+## Behavior settings
+
+These apply to every version of the decision and take effect immediately:
+
+- **Confidence threshold** (default 0.70) and **uncertainty policy** — see [confidence](/en/concepts/confidence).
+- **Engine**: Jev with automatic LLM fallback (default), Jev only, or LLM only.
+- **PII detection** in free text: off, standard or strict.
+- **Engine timeout** (default 3 000 ms).

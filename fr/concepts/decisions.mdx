@@ -1,0 +1,66 @@
+---
+title: Décisions
+description: Les trois types de décision — route, score, classify — et comment les définir.
+---
+
+Une décision est une question fermée que votre workflow pose à Branch Pilot. Vous la définissez dans l'éditeur : ce que le workflow envoie (le **contexte**), la **question** posée au moteur, et les **options** de réponse.
+
+## Contexte
+
+Décrivez ce que votre workflow enverra, et déclarez éventuellement des champs :
+
+| Réglage | Effet |
+|---|---|
+| Nom et type du champ | Le payload est validé ; un champ requis manquant ou un mauvais type renvoie `400 invalid_payload` avec la liste des problèmes. |
+| **PII** | Le champ est remplacé par un jeton avant tout appel au modèle, et sa valeur est aussi remplacée partout où elle apparaît dans le texte libre. Voir [pseudonymisation](/fr/concepts/pseudonymization). |
+| Payload d'exemple | Pré-remplit le playground et le formulaire de cas de test. |
+
+Sans champ déclaré, n'importe quel payload est accepté tel quel : objet, texte ou tableau.
+
+## Route
+
+Choisit **une** option parmi 2 à 255. Chaque option a une clé, renvoyée à votre workflow, et une description que le moteur évalue.
+
+```text
+sales      Veut acheter, demande un prix, un devis, une démo ou un essai.
+support    Client existant avec un problème, un bug, un souci de connexion ou de facturation.
+spam       Offres non sollicitées, SEO ou netlinking, contenu hors sujet.
+```
+
+Réponse : `choice`, `probabilities` (une par option, somme égale à 1) et `confidence`.
+
+<Tip>Ajoutez une option `other` ou `none` quand la liste ne couvre pas forcément tous les cas. Le moteur y range les cas ambigus au lieu de forcer une mauvaise branche.</Tip>
+
+## Score
+
+Renvoie un **score de 0 à 100** sur 2 à 10 niveaux ordonnés que vous décrivez, du plus bas au plus haut.
+
+```text
+0  Froid      Curieux, étudiant, sans budget, vague ou hors sujet.
+1  Tiède      Intéressé mais sans échéance, petite équipe ou besoin flou.
+2  Chaud      Besoin clair, rôle pertinent, mentionne une échéance ou une équipe.
+3  Brûlant    Décideur avec budget, urgence et cas d'usage concret.
+```
+
+Le moteur renvoie une probabilité par niveau. `raw_score` est la position pondérée sur l'échelle des niveaux (par exemple 2,4), `score` est cette position ramenée sur 0–100, et `legend` associe les index de niveau à leurs libellés.
+
+## Classify
+
+Renvoie **toutes les étiquettes** dont la probabilité atteint leur seuil — plusieurs à la fois, ou aucune. Chaque étiquette a une clé, une description et un seuil optionnel (0,5 par défaut, réglable par décision).
+
+```text
+billing          Factures, paiements, prélèvements, remboursements ou offres.
+technical        Un bug, une erreur, quelque chose qui ne fonctionne pas.
+feature_request  Demande une nouvelle fonctionnalité ou une amélioration.
+```
+
+Réponse : `labels` (les clés retenues) et `probabilities` (une par étiquette, indépendantes les unes des autres).
+
+## Réglages de comportement
+
+Ils s'appliquent à toutes les versions de la décision et prennent effet immédiatement :
+
+- **Seuil de confiance** (0,70 par défaut) et **politique d'incertitude** — voir [confiance](/fr/concepts/confidence).
+- **Moteur** : Jev avec fallback LLM automatique (défaut), Jev seul, ou LLM seul.
+- **Détection des PII** dans le texte libre : désactivée, standard ou stricte.
+- **Délai maximal du moteur** (3 000 ms par défaut).

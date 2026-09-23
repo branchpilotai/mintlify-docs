@@ -1,0 +1,24 @@
+---
+title: Versions et cas de test
+description: Brouillons, publication, retour arrière, et les cas de test qui gardent une décision honnête.
+---
+
+## Versions
+
+Modifier une décision ne change jamais ce que sert l'endpoint. Enregistrer écrit un **brouillon** ; **Publier** en fait la version **en ligne** et archive la précédente. Chaque version est immuable une fois publiée.
+
+- L'endpoint sert toujours la version en ligne.
+- Passez `options.version` pour appeler une version précise, en ligne ou non — utile pour comparer un brouillon avec la production depuis vos propres outils.
+- **Remettre en ligne** une version archivée fait un retour arrière en un clic.
+
+Les réglages de comportement (seuil, politique d'incertitude, moteur, détection des PII, délai) sont portés par la décision, pas par la version, et s'appliquent immédiatement.
+
+## Cas de test
+
+Un cas de test associe une entrée à un résultat attendu : un **choix** attendu pour une décision route, une **plage de score** pour une décision score, les **étiquettes** attendues pour une décision classify. Les templates en fournissent quelques-uns ; ajoutez les vôtres depuis l'onglet **Tests**, ou depuis n'importe quelle exécution de l'historique avec **Ajouter comme cas de test**.
+
+**Tout exécuter** rejoue chaque cas sur le brouillon (ou sur la version en ligne s'il n'y a pas de brouillon) et affiche un résumé : cas réussis, confiance moyenne. Lancez-le avant de publier ; relancez-le après avoir réécrit une description.
+
+<Note>
+Les exécutions de test comptent dans votre quota et apparaissent dans l'historique marquées comme exécutions du playground.
+</Note>

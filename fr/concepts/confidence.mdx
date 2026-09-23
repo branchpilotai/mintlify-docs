@@ -1,0 +1,28 @@
+---
+title: Confiance et incertitude
+description: Ce que signifie la confiance, ce qui se passe sous le seuil, et comment fonctionne la file de revue humaine.
+---
+
+Chaque réponse porte une `confidence` entre 0 et 1 et une `confidence_source`.
+
+- `calibrated` — le moteur principal (Jev) calcule la confiance à partir de la forme de la distribution de probabilités : toute la masse sur une option donne 1,0 ; une répartition uniforme donne une valeur basse.
+- `self_reported` — le LLM de secours déclare sa propre confiance ; Branch Pilot lui retire un malus (0,10 par défaut) car les modèles de langage ont tendance à être trop sûrs d'eux.
+
+Pour les décisions **classify**, la confiance est la plus petite marge entre la probabilité d'une étiquette et son seuil : une étiquette qui flotte autour de son seuil rend toute la décision moins certaine.
+
+## Sous le seuil
+
+Chaque décision a un **seuil de confiance** (0,70 par défaut). Quand la confiance de la réponse est plus basse, la **politique d'incertitude** s'applique :
+
+<Tabs>
+  <Tab title="Branche incertaine (défaut)">
+    La réponse a `status: "uncertain"`. Pour les décisions route, `choice` vaut `"__uncertain__"` ; les probabilités sont tout de même renvoyées pour inspection. Donnez à ce cas sa propre branche dans votre workflow : demander à l'utilisateur, appliquer un défaut, ou escalader.
+  </Tab>
+  <Tab title="Revue humaine">
+    La réponse a `status: "pending"` et une `review_url`. L'exécution attend dans la **File de revue** de l'app, où un humain choisit l'option ; le choix est enregistré comme retour. Votre workflow doit gérer le cas « pending » : interroger l'exécution plus tard, ou traiter « pending » comme une branche à part.
+  </Tab>
+</Tabs>
+
+## Retours
+
+Toute exécution peut être marquée **bonne** ou **mauvaise** dans l'historique, avec une note. Les retours ne réentraînent pas le moteur ; ils alimentent les statistiques par décision et par version (taux de retours négatifs, confiance moyenne) pour repérer une dérive et réécrire les critères avant qu'elle ne pose problème. Toute exécution peut aussi devenir un [cas de test](/fr/concepts/versions-and-tests) en un clic.

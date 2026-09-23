@@ -1,0 +1,24 @@
+---
+title: Versions and test cases
+description: Drafts, publishing, rollback, and the test cases that keep a decision honest.
+---
+
+## Versions
+
+Editing a decision never changes what the endpoint serves. Saving writes a **draft**; **Publish** makes it the **live** version and archives the previous one. Every version is immutable once published.
+
+- The endpoint always serves the live version.
+- Pass `options.version` to call a specific version, live or not — useful to compare a draft with production from your own tooling.
+- **Make live again** on an archived version rolls back in one click.
+
+Behavior settings (threshold, uncertainty policy, engine, PII detection, timeout) live on the decision, not on the version, and apply immediately.
+
+## Test cases
+
+A test case is an input and an expected result: an expected **choice** for route decisions, a **score range** for score decisions, the expected **labels** for classify decisions. Templates ship with a few; add yours from the **Tests** tab, or from any run in the history with **Add as test case**.
+
+**Run all** replays every case against the draft (or the live version if there is no draft) and shows a summary: cases passed, average confidence. Run it before publishing; run it again after rewriting a description.
+
+<Note>
+Test runs count toward your quota and appear in the history tagged as playground runs.
+</Note>

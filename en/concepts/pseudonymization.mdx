@@ -1,0 +1,42 @@
+---
+title: Pseudonymization
+description: Personal data is replaced by tokens before any model call; the mapping is never stored.
+---
+
+Before Branch Pilot calls an engine, it replaces personal data in the payload with neutral tokens. The engine decides on the pseudonymized payload; the correspondence between tokens and real values lives in memory for the duration of the request and is never written anywhere. Your history keeps the pseudonymized payload only.
+
+```json
+// What your workflow sends            // What the model sees
+{                                      {
+  "name": "Jean Dupont",                 "name": "<NAME_1>",
+  "email": "jean@dupont.fr",             "email": "<EMAIL_1>",
+  "message": "Bonjour, je suis Jean      "message": "Bonjour, je suis <NAME_1>,
+   Dupont, rappelez-moi au                rappelez-moi au <PHONE_1>."
+   06 12 34 56 78."
+}                                      }
+```
+
+The decision (route to sales, score the urgency) depends on the content of the message, not on who wrote it, so the engine does not need the real values.
+
+## Two levels
+
+<Steps>
+  <Step title="Declared fields (deterministic)">
+    Mark a context field as **PII** in the editor. Its value is replaced entirely by a token built from the field name (`<EMAIL_1>`, `<NAME_1>`), and the same value is replaced wherever it appears in free text. Reliable at 100%, no cost.
+  </Step>
+  <Step title="Free-text detection (heuristic)">
+    Set the **PII detection** behavior per decision:
+
+    - **Off** — declared fields only.
+    - **Standard** — emails, phone numbers (French and international formats), IBANs, French social security numbers, URLs and dates of birth are detected and replaced.
+    - **Strict** — also replaces any number of 6 or more digits (contract numbers, customer ids).
+
+    Detection is not perfect on proper names. Declare the fields that carry names rather than relying on detection.
+  </Step>
+</Steps>
+
+The playground always shows the payload exactly as it was sent to the model, and every response carries `pii_redacted`, the number of substitutions performed.
+
+<Warning>
+A piece of identifying information that detection does not recognize in free text (for example "my neighbour at 12 rue X") is sent as is. Pseudonymization strongly reduces the risk; it does not remove it. Pseudonymized payloads are processed by TypeSafe AI in the United States under a data processing agreement and standard contractual clauses — see the [privacy policy](https://branchpilot.ai/privacy).
+</Warning>

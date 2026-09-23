@@ -1,0 +1,108 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Branch Pilot",
+  "description": "The AI decision layer for workflows: route, score and classify from Make, n8n or code.",
+  "colors": {
+    "primary": "#2563eb",
+    "light": "#7c9cff",
+    "dark": "#1d4ed8"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://branchpilot.ai"
+  },
+  "appearance": {
+    "default": "dark",
+    "strict": false
+  },
+  "fonts": {
+    "family": "Geist"
+  },
+  "navbar": {
+    "links": [
+      { "label": "Website", "href": "https://branchpilot.ai" },
+      { "label": "Sign in", "href": "https://app.branchpilot.ai/login" }
+    ],
+    "primary": { "type": "button", "label": "Start free", "href": "https://app.branchpilot.ai/login" }
+  },
+  "footer": {
+    "links": [
+      {
+        "header": "Product",
+        "items": [
+          { "label": "Pricing", "href": "https://branchpilot.ai/pricing" },
+          { "label": "Changelog", "href": "https://branchpilot.ai/changelog" },
+          { "label": "Status", "href": "https://branchpilot.ai/status" }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          { "label": "Privacy", "href": "https://branchpilot.ai/privacy" },
+          { "label": "Terms", "href": "https://branchpilot.ai/terms" },
+          { "label": "Sub-processors", "href": "https://branchpilot.ai/sub-processors" }
+        ]
+      }
+    ]
+  },
+  "navigation": {
+    "languages": [
+      {
+        "language": "en",
+        "tabs": [
+          {
+            "tab": "Guides",
+            "groups": [
+              { "group": "Get started", "pages": ["en/index", "en/quickstart"] },
+              {
+                "group": "Concepts",
+                "pages": ["en/concepts/decisions", "en/concepts/confidence", "en/concepts/pseudonymization", "en/concepts/versions-and-tests"]
+              },
+              { "group": "Integrations", "pages": ["en/integrations/rest", "en/integrations/make", "en/integrations/n8n"] },
+              { "group": "Product", "pages": ["en/changelog"] }
+            ]
+          },
+          {
+            "tab": "API reference",
+            "openapi": "openapi.yaml",
+            "groups": [
+              { "group": "Basics", "pages": ["en/api/authentication", "en/api/errors"] },
+              { "group": "Endpoints", "pages": ["POST /decide/{slug}"] }
+            ]
+          }
+        ]
+      },
+      {
+        "language": "fr",
+        "tabs": [
+          {
+            "tab": "Guides",
+            "groups": [
+              { "group": "Démarrer", "pages": ["fr/index", "fr/quickstart"] },
+              {
+                "group": "Concepts",
+                "pages": ["fr/concepts/decisions", "fr/concepts/confidence", "fr/concepts/pseudonymization", "fr/concepts/versions-and-tests"]
+              },
+              { "group": "Intégrations", "pages": ["fr/integrations/rest", "fr/integrations/make", "fr/integrations/n8n"] },
+              { "group": "Produit", "pages": ["fr/changelog"] }
+            ]
+          },
+          {
+            "tab": "Référence API",
+            "openapi": "openapi.yaml",
+            "groups": [
+              { "group": "Bases", "pages": ["fr/api/authentication", "fr/api/errors"] },
+              { "group": "Endpoints", "pages": ["POST /decide/{slug}"] }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "redirects": [
+    { "source": "/", "destination": "/en/index" }
+  ]
+}

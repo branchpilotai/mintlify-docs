@@ -1,0 +1,34 @@
+---
+title: Make
+description: Utiliser Branch Pilot dans un scénario Make avec le module HTTP, ou avec l'app Branch Pilot à sa sortie.
+---
+
+<Note>
+Une app Branch Pilot officielle pour Make (modules *Make a decision*, *Send feedback*, *Get run*) est en préparation. En attendant sa publication, le module HTTP ci-dessous fait le travail.
+</Note>
+
+## Avec le module HTTP
+
+<Steps>
+  <Step title="Ajoutez un module HTTP → Make a request">
+    - **URL** : `https://api.branchpilot.ai/v1/decide/lead-routing` (le slug de votre décision)
+    - **Method** : POST
+    - **Headers** : `Authorization: Bearer bp_live_…` et `Content-Type: application/json`
+    - **Body type** : Raw, **Content type** : JSON
+    - **Parse response** : oui
+  </Step>
+  <Step title="Mappez l'entrée">
+    Dans le corps, mappez les champs du module précédent :
+
+    ```json
+    { "input": { "email": "{{1.email}}", "message": "{{1.message}}" } }
+    ```
+  </Step>
+  <Step title="Routez sur la réponse">
+    Ajoutez un **Router** après le module HTTP. Sur chaque route, filtrez sur `{{2.data.choice}}` : égal à `sales`, `support`, `spam`… et une route pour `__uncertain__`. Pour une décision score, filtrez sur `{{2.data.score}}` ; pour une classification, sur `{{2.data.labels}}` contenant une étiquette.
+  </Step>
+</Steps>
+
+<Tip>
+Stockez la clé API dans une **connexion** Make ou une variable de scénario plutôt que dans le corps du module, pour qu'elle n'apparaisse pas dans le blueprint du scénario.
+</Tip>

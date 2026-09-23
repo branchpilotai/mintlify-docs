@@ -1,0 +1,33 @@
+---
+title: Errors
+description: Error format and codes returned by the API.
+---
+
+Errors return a JSON body with a machine-readable `code`, a `message`, and optional `details`:
+
+```json
+{
+  "error": {
+    "code": "invalid_payload",
+    "message": "Input does not match the decision context",
+    "details": ["input.email: required"]
+  }
+}
+```
+
+| HTTP | `code` | Meaning |
+|---|---|---|
+| 400 | `invalid_json` | The body is not valid JSON. |
+| 400 | `invalid_payload` | `input` is missing, or does not match the declared fields (`details` lists the problems); or `options` is invalid. |
+| 401 | `unauthorized` | Missing, invalid or revoked API key. |
+| 404 | `not_found` | Unknown decision slug, or unknown version number. |
+| 409 | `no_live_version` | The decision has no published version. Publish it, or pass `options.version`. |
+| 413 | `payload_too_large` | The body exceeds 128 KB. |
+| 429 | `quota_exceeded` | The monthly quota is reached. `Retry-After` gives the seconds until the next period; `details` has `used` and `quota`. |
+| 502 | `engines_unavailable` | Neither engine could answer. `details` lists each attempt with its engine and error code. The run is recorded with status `error` and does not count toward your quota. |
+
+## Retrying
+
+- `429`: wait for `Retry-After`, or upgrade the plan; retrying sooner returns the same error.
+- `502`: retry once after a few seconds. Branch Pilot already retried the primary engine and tried the fallback; a second `502` usually means an incident on both providers.
+- `5xx` without a JSON body: transient; retry with exponential backoff.

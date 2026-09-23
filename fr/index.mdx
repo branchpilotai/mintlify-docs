@@ -1,0 +1,46 @@
+---
+title: Introduction
+description: Branch Pilot est la couche de décision IA pour vos workflows — routez, scorez et classez depuis Make, n8n ou votre code, avec des probabilités calibrées et des réponses typées.
+---
+
+Chaque embranchement d'une automatisation est une décision : quelle équipe reçoit ce lead, quelle urgence pour ce ticket, quels sujets aborde ce message. Branch Pilot transforme chacune en un **endpoint de décision** que vous définissez sans code, testez avec de vrais payloads et appelez depuis votre workflow.
+
+## Ce que vous recevez
+
+Une réponse typée, jamais du texte libre :
+
+```json
+{
+  "status": "ok",
+  "choice": "sales",
+  "probabilities": { "sales": 0.87, "support": 0.09, "spam": 0.04 },
+  "confidence": 0.87,
+  "engine": "jev",
+  "latency_ms": 212
+}
+```
+
+- Les décisions **route** choisissent une option parmi 255 au plus.
+- Les décisions **score** renvoient un score de 0 à 100 sur des niveaux ordonnés.
+- Les décisions **classify** renvoient toutes les étiquettes dont la probabilité atteint leur seuil.
+
+## Comment ça marche
+
+Branch Pilot repose sur **Jev**, un modèle System One de TypeSafe AI. Contrairement à un modèle de langage, Jev ne génère pas de texte : il évalue vos options en parallèle et renvoie des probabilités calibrées. Il ne peut pas produire une réponse mal formée. Quand Jev est indisponible, Branch Pilot bascule sur Mistral avec le même schéma typé, et la réponse indique quel moteur a répondu.
+
+Avant tout appel au modèle, les données personnelles de votre payload sont remplacées par des jetons neutres. Seul le payload pseudonymisé est envoyé aux moteurs et conservé dans votre historique. [Comment fonctionne la pseudonymisation](/fr/concepts/pseudonymization).
+
+<CardGroup cols={2}>
+  <Card title="Démarrage rapide" icon="rocket" href="/fr/quickstart">
+    Votre première décision en cinq minutes, du template à l'appel curl.
+  </Card>
+  <Card title="Décisions" icon="code-branch" href="/fr/concepts/decisions">
+    Route, score et classify : ce que chaque type attend et renvoie.
+  </Card>
+  <Card title="Confiance" icon="gauge" href="/fr/concepts/confidence">
+    Seuils, branche incertaine et file de revue humaine.
+  </Card>
+  <Card title="Référence API" icon="terminal" href="/fr/api/authentication">
+    Authentification, formats de requête et de réponse, erreurs.
+  </Card>
+</CardGroup>

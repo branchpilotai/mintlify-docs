@@ -1,0 +1,33 @@
+---
+title: Erreurs
+description: Format et codes d'erreur renvoyés par l'API.
+---
+
+Les erreurs renvoient un corps JSON avec un `code` lisible par machine, un `message`, et des `details` optionnels :
+
+```json
+{
+  "error": {
+    "code": "invalid_payload",
+    "message": "Input does not match the decision context",
+    "details": ["input.email: required"]
+  }
+}
+```
+
+| HTTP | `code` | Signification |
+|---|---|---|
+| 400 | `invalid_json` | Le corps n'est pas du JSON valide. |
+| 400 | `invalid_payload` | `input` est absent, ou ne correspond pas aux champs déclarés (`details` liste les problèmes) ; ou `options` est invalide. |
+| 401 | `unauthorized` | Clé API absente, invalide ou révoquée. |
+| 404 | `not_found` | Slug de décision inconnu, ou numéro de version inconnu. |
+| 409 | `no_live_version` | La décision n'a pas de version publiée. Publiez-la, ou passez `options.version`. |
+| 413 | `payload_too_large` | Le corps dépasse 128 Ko. |
+| 429 | `quota_exceeded` | Le quota mensuel est atteint. `Retry-After` donne les secondes jusqu'à la période suivante ; `details` contient `used` et `quota`. |
+| 502 | `engines_unavailable` | Aucun moteur n'a pu répondre. `details` liste chaque tentative avec son moteur et son code d'erreur. L'exécution est enregistrée avec le statut `error` et ne compte pas dans votre quota. |
+
+## Réessayer
+
+- `429` : attendez `Retry-After`, ou changez d'offre ; réessayer plus tôt renvoie la même erreur.
+- `502` : réessayez une fois après quelques secondes. Branch Pilot a déjà réessayé le moteur principal et tenté le secours ; un second `502` signale généralement un incident chez les deux fournisseurs.
+- `5xx` sans corps JSON : transitoire ; réessayez avec un délai croissant.

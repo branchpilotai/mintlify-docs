@@ -1,0 +1,27 @@
+---
+title: Authentication
+description: API keys, environments, and where to send them.
+---
+
+Create keys in **Settings → API keys**. A key is shown once at creation; Branch Pilot stores only a hash. Revoke any key you suspect is compromised; workflows using it stop working immediately.
+
+Send the key as a Bearer token:
+
+```http
+POST /v1/decide/lead-routing HTTP/1.1
+Host: api.branchpilot.ai
+Authorization: Bearer bp_live_8ec3887f…
+Content-Type: application/json
+```
+
+## Test and live keys
+
+Keys are created as **test** (`bp_test_…`) or **live** (`bp_live_…`). They behave the same today: both call the same decisions and count toward the same quota. Use them to separate environments in your own tooling and to revoke them independently.
+
+## Base URL
+
+| Environment | Base URL |
+|---|---|
+| Production | `https://api.branchpilot.ai/v1` |
+
+Requests are limited to 128 KB. Keys are tied to your account; there is no per-key scope in this version.

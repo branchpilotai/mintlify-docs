@@ -1,0 +1,42 @@
+---
+title: Pseudonymisation
+description: Les données personnelles sont remplacées par des jetons avant tout appel au modèle ; la correspondance n'est jamais stockée.
+---
+
+Avant d'appeler un moteur, Branch Pilot remplace les données personnelles du payload par des jetons neutres. Le moteur décide sur le payload pseudonymisé ; la correspondance entre jetons et valeurs réelles vit en mémoire le temps de la requête et n'est écrite nulle part. Votre historique ne conserve que le payload pseudonymisé.
+
+```json
+// Ce que votre workflow envoie          // Ce que voit le modèle
+{                                        {
+  "name": "Jean Dupont",                   "name": "<NAME_1>",
+  "email": "jean@dupont.fr",               "email": "<EMAIL_1>",
+  "message": "Bonjour, je suis Jean        "message": "Bonjour, je suis <NAME_1>,
+   Dupont, rappelez-moi au                  rappelez-moi au <PHONE_1>."
+   06 12 34 56 78."
+}                                        }
+```
+
+La décision (router vers les ventes, scorer l'urgence) dépend du contenu du message, pas de son auteur : le moteur n'a pas besoin des valeurs réelles.
+
+## Deux niveaux
+
+<Steps>
+  <Step title="Champs déclarés (déterministe)">
+    Marquez un champ du contexte comme **PII** dans l'éditeur. Sa valeur est remplacée intégralement par un jeton construit à partir du nom du champ (`<EMAIL_1>`, `<NAME_1>`), et la même valeur est remplacée partout où elle apparaît dans le texte libre. Fiable à 100 %, sans coût.
+  </Step>
+  <Step title="Détection dans le texte libre (heuristique)">
+    Réglez la **détection des PII** par décision :
+
+    - **Désactivée** — champs déclarés seulement.
+    - **Standard** — emails, numéros de téléphone (formats français et internationaux), IBAN, numéros de sécurité sociale français, URL et dates de naissance sont détectés et remplacés.
+    - **Stricte** — remplace aussi tout nombre de 6 chiffres ou plus (numéros de contrat, identifiants clients).
+
+    La détection n'est pas parfaite sur les noms propres. Déclarez les champs qui portent des noms plutôt que de compter sur la détection.
+  </Step>
+</Steps>
+
+Le playground affiche toujours le payload exactement tel qu'il a été envoyé au modèle, et chaque réponse porte `pii_redacted`, le nombre de substitutions effectuées.
+
+<Warning>
+Une information identifiante que la détection ne reconnaît pas dans le texte libre (par exemple « mon voisin du 12 rue X ») part telle quelle. La pseudonymisation réduit fortement le risque ; elle ne le supprime pas. Les payloads pseudonymisés sont traités par TypeSafe AI aux États-Unis dans le cadre d'un accord de traitement des données et de clauses contractuelles types — voir la [politique de confidentialité](https://branchpilot.ai/fr/privacy).
+</Warning>
