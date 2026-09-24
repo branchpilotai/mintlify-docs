@@ -59,7 +59,7 @@
               { "group": "Get started", "pages": ["en/index", "en/quickstart"] },
               {
                 "group": "Concepts",
-                "pages": ["en/concepts/decisions", "en/concepts/confidence", "en/concepts/pseudonymization", "en/concepts/versions-and-tests"]
+                "pages": ["en/concepts/decisions", "en/concepts/confidence", "en/concepts/pseudonymization", "en/concepts/versions-and-tests", "en/concepts/plans-and-limits"]
               },
               { "group": "Integrations", "pages": ["en/integrations/rest", "en/integrations/make", "en/integrations/n8n"] },
               { "group": "Product", "pages": ["en/changelog"] }
@@ -84,7 +84,7 @@
               { "group": "Démarrer", "pages": ["fr/index", "fr/quickstart"] },
               {
                 "group": "Concepts",
-                "pages": ["fr/concepts/decisions", "fr/concepts/confidence", "fr/concepts/pseudonymization", "fr/concepts/versions-and-tests"]
+                "pages": ["fr/concepts/decisions", "fr/concepts/confidence", "fr/concepts/pseudonymization", "fr/concepts/versions-and-tests", "fr/concepts/plans-and-limits"]
               },
               { "group": "Intégrations", "pages": ["fr/integrations/rest", "fr/integrations/make", "fr/integrations/n8n"] },
               { "group": "Produit", "pages": ["fr/changelog"] }

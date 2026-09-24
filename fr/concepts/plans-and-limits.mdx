@@ -1,0 +1,83 @@
+---
+title: "Offres, quotas et limites"
+description: "Ce que chaque offre comprend, comment s’appliquent les quotas et la limite de débit, et ce que l’API renvoie lorsqu’ils sont atteints."
+---
+
+## Offres
+
+| Offre | Décisions / mois | Limite de débit | Historique | Décisions en ligne | Clés API | En plus |
+|---|---|---|---|---|---|---|
+| **Free** | 100 | 30 req/min | 7 jours | 3 | 1 | Repli LLM, templates |
+| **Starter** | 5 000 | 60 req/min | 30 jours | illimité | illimité | Versions, jeux de tests, revue humaine |
+| **Pro** | 50 000 | 120 req/min | 30 jours | illimité | illimité | Mode PII strict, alertes quota et repli, support prioritaire |
+| **Scale** | 500 000 | 600 req/min | 30 jours | illimité | illimité | Modèle de repli au choix |
+| **Enterprise** | sur mesure | 600 req/min | 30 jours | illimité | illimité | DPA signé, zéro rétention chez TypeSafe, SLA, facturation annuelle |
+
+Les prix sont sur [branchpilot.ai/fr/pricing](https://branchpilot.ai/fr/pricing), hors taxes. Les offres se gèrent dans l’application, **Paramètres → Facturation**.
+
+<Note>
+**Early access.** Les 50 premiers comptes bénéficient de l’offre Pro gratuitement pendant trois mois, en échange de retours sincères. Elle est attribuée automatiquement à l’inscription tant qu’il reste des places.
+</Note>
+
+## Codes promotionnels
+
+Un code saisi dans **Paramètres → Facturation → Vous avez un code ?** offre une offre pendant un nombre de mois donné (par exemple trois mois de Pro). Il s’applique immédiatement ; le compte revient en Free à la fin de la période, sauf si un abonnement a été souscrit entre-temps. Un code ne peut pas s’appliquer à un compte ayant un abonnement payant, et chaque code fonctionne une seule fois par compte.
+
+## Quota mensuel
+
+Une requête de décision = une unité, quel que soit le moteur utilisé (Jev ou repli LLM) et quel que soit le résultat (`ok`, `uncertain`, `pending`). Les exécutions du playground comptent aussi ; les réponses en erreur, non.
+
+Le quota se renouvelle le premier jour de chaque mois civil (UTC). La consommation est visible sur le tableau de bord, et le titulaire du compte reçoit un email à 80 % et à 100 %.
+
+Quota atteint : `POST /decide/{slug}` répond **429** avec `code: "quota_exceeded"` :
+
+```json
+{
+  "error": {
+    "code": "quota_exceeded",
+    "message": "Monthly quota of 100 decisions reached",
+    "details": {
+      "used": 100,
+      "quota": 100,
+      "retry_after": 432000,
+      "upgrade_url": "https://app.branchpilot.ai/settings#billing"
+    }
+  }
+}
+```
+
+L’en-tête `Retry-After` donne le nombre de secondes avant la prochaine période. Il n’y a pas de facturation au dépassement : changer d’offre rétablit l’accès immédiatement.
+
+## Limite de débit
+
+Chaque clé API dispose d’un budget de requêtes par minute fixé par l’offre (par compte pour le playground). Chaque réponse de `POST /decide/{slug}` porte :
+
+| En-tête | Signification |
+|---|---|
+| `X-RateLimit-Limit` | requêtes autorisées par minute |
+| `X-RateLimit-Remaining` | requêtes restantes dans la minute en cours |
+| `X-RateLimit-Reset` | secondes avant la réinitialisation |
+
+Au-delà de la limite, l’API répond **429** avec `code: "rate_limited"` et un en-tête `Retry-After` :
+
+```json
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "Rate limit of 30 requests per minute reached",
+    "details": { "limit": 30, "retry_after": 41 }
+  }
+}
+```
+
+Les connecteurs doivent attendre `Retry-After` secondes puis réessayer ; dans Make et n8n, un gestionnaire d’erreur ou l’option *Retry* du module suffit.
+
+## Limites de l’offre dans l’application
+
+- **Décisions en ligne** : en Free, 3 décisions publiées au maximum simultanément ; la publication d’une quatrième est refusée avec un message explicite.
+- **Clés API** : en Free, une clé active ; révoquez-la pour en créer une autre.
+- **Mode PII strict** : à partir de Pro. Le mode standard (champs déclarés plus emails, téléphones, IBAN, URL et dates détectés) est disponible sur toutes les offres.
+
+## Conservation
+
+Les exécutions sont purgées automatiquement après 7 jours (Free) ou 30 jours (offres payantes). Décisions, versions et cas de test sont conservés pendant la vie du compte. La suppression du compte depuis **Paramètres** efface tout immédiatement ; les factures restent chez Stripe comme la loi l’exige.

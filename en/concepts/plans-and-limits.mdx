@@ -1,0 +1,83 @@
+---
+title: "Plans, quotas and limits"
+description: "What each plan includes, how quotas and rate limits apply, and what the API returns when you hit them."
+---
+
+## Plans
+
+| Plan | Decisions / month | Rate limit | Run history | Live decisions | API keys | Extras |
+|---|---|---|---|---|---|---|
+| **Free** | 100 | 30 req/min | 7 days | 3 | 1 | LLM fallback, templates |
+| **Starter** | 5,000 | 60 req/min | 30 days | unlimited | unlimited | Versioning, test sets, human review |
+| **Pro** | 50,000 | 120 req/min | 30 days | unlimited | unlimited | Strict PII mode, quota and fallback alerts, priority support |
+| **Scale** | 500,000 | 600 req/min | 30 days | unlimited | unlimited | Choice of fallback model |
+| **Enterprise** | custom | 600 req/min | 30 days | unlimited | unlimited | Signed DPA, zero data retention at TypeSafe, SLA, annual invoicing |
+
+Prices are listed on [branchpilot.ai/pricing](https://branchpilot.ai/pricing), excluding VAT. Plans are managed in the app under **Settings → Billing**.
+
+<Note>
+**Early access.** The first 50 accounts get the Pro plan free for three months, in exchange for candid feedback. It is applied automatically at sign-up while seats remain.
+</Note>
+
+## Promo codes
+
+A code entered in **Settings → Billing → Have a code?** offers a plan for a number of months (for example three months of Pro). It applies immediately; the account returns to Free at the end of the period unless a subscription was started in the meantime. A code cannot be applied to an account with a paid subscription, and each code works once per account.
+
+## Monthly quota
+
+One decision request = one unit, whatever the engine used (Jev or the LLM fallback) and whatever the outcome (`ok`, `uncertain`, `pending`). Playground runs count too; error responses do not.
+
+The quota resets on the first day of each calendar month (UTC). Usage is visible on the dashboard, and the account owner is emailed at 80 % and 100 %.
+
+When the quota is reached, `POST /decide/{slug}` answers **429** with `code: "quota_exceeded"`:
+
+```json
+{
+  "error": {
+    "code": "quota_exceeded",
+    "message": "Monthly quota of 100 decisions reached",
+    "details": {
+      "used": 100,
+      "quota": 100,
+      "retry_after": 432000,
+      "upgrade_url": "https://app.branchpilot.ai/settings#billing"
+    }
+  }
+}
+```
+
+The `Retry-After` header carries the number of seconds until the next period. There is no overage billing: upgrade the plan to resume immediately.
+
+## Rate limit
+
+Each API key has a per-minute request budget set by the plan (per account for the playground). Every response of `POST /decide/{slug}` carries:
+
+| Header | Meaning |
+|---|---|
+| `X-RateLimit-Limit` | requests allowed per minute |
+| `X-RateLimit-Remaining` | requests left in the current minute |
+| `X-RateLimit-Reset` | seconds until the window resets |
+
+Beyond the limit, the API answers **429** with `code: "rate_limited"` and a `Retry-After` header:
+
+```json
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "Rate limit of 30 requests per minute reached",
+    "details": { "limit": 30, "retry_after": 41 }
+  }
+}
+```
+
+Connectors should wait `Retry-After` seconds and retry; Make and n8n do this with a simple error handler or a *Retry* setting on the module.
+
+## Plan limits in the app
+
+- **Live decisions**: on Free, at most 3 decisions can be published at the same time; publishing a fourth is refused with an explicit message.
+- **API keys**: on Free, one active key; revoke it to create another.
+- **Strict PII mode**: available from Pro. Standard mode (declared fields plus detected emails, phones, IBANs, URLs and dates) is available on every plan.
+
+## Retention
+
+Runs are purged automatically after 7 days (Free) or 30 days (paid plans). Decisions, versions and test cases are kept for the life of the account. Deleting the account from **Settings** removes everything immediately; invoices remain in Stripe as the law requires.
