@@ -17,21 +17,19 @@ servers:
     description: Production
 security:
   - apiKey: []
+tags:
+  - name: Decide
+  - name: Runs
+  - name: Decisions
 paths:
   /decide/{slug}:
     post:
       operationId: decide
+      tags: [Decide]
       summary: Make a decision
       description: Runs the live version of the decision (or `options.version`) on `input`.
       parameters:
-        - name: slug
-          in: path
-          required: true
-          description: Slug of the decision, as shown in the app.
-          schema:
-            type: string
-            pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
-            example: lead-routing
+        - $ref: "#/components/parameters/slug"
       requestBody:
         required: true
         content:
@@ -67,23 +65,11 @@ paths:
                     latency_ms: 212
                     pii_redacted: 1
         "400":
-          description: Invalid JSON, or input does not match the declared fields.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/BadRequest"
         "401":
-          description: Missing, invalid or revoked API key.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/Unauthorized"
         "404":
-          description: Unknown decision or version.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+          $ref: "#/components/responses/NotFound"
         "409":
           description: The decision has no published version.
           content:
@@ -112,12 +98,147 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /runs/{run_id}:
+    get:
+      operationId: getRun
+      tags: [Runs]
+      summary: Get a run
+      description: |
+        Status and result of a run. Use it to follow a `pending` run sent to the human review queue:
+        once a human has picked, `status` becomes `resolved` and `choice` carries the human choice.
+      parameters:
+        - $ref: "#/components/parameters/runId"
+      responses:
+        "200":
+          description: The run.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /runs/{run_id}/feedback:
+    post:
+      operationId: setRunFeedback
+      tags: [Runs]
+      summary: Send feedback on a run
+      parameters:
+        - $ref: "#/components/parameters/runId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [feedback]
+              properties:
+                feedback:
+                  type: [string, "null"]
+                  enum: [good, bad, null]
+                  description: "`null` clears the feedback."
+                note:
+                  type: string
+                  maxLength: 1000
+      responses:
+        "200":
+          description: Feedback recorded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  run_id: { type: string, format: uuid }
+                  feedback: { type: [string, "null"], enum: [good, bad, null] }
+                  note: { type: [string, "null"] }
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /decisions:
+    get:
+      operationId: listDecisions
+      tags: [Decisions]
+      summary: List decisions
+      description: The decisions of the account, for connectors that let users pick one.
+      responses:
+        "200":
+          description: The decisions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decisions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DecisionSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /decisions/{slug}:
+    get:
+      operationId: getDecision
+      tags: [Decisions]
+      summary: Get a decision
+      description: Type, declared context fields and options of the live version — what a connector needs to build dynamic fields.
+      parameters:
+        - $ref: "#/components/parameters/slug"
+      responses:
+        "200":
+          description: The decision.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DecisionDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 components:
   securitySchemes:
     apiKey:
       type: http
       scheme: bearer
       description: An API key created in Settings → API keys (`bp_live_…` or `bp_test_…`).
+  parameters:
+    slug:
+      name: slug
+      in: path
+      required: true
+      description: Slug of the decision, as shown in the app.
+      schema:
+        type: string
+        pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+        example: lead-routing
+    runId:
+      name: run_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Invalid JSON, or input does not match the declared fields.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Missing, invalid or revoked API key.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Unknown resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
   schemas:
     DecideRequest:
       type: object
@@ -204,6 +325,69 @@ components:
           type: string
           format: uri
           description: Present when status is `pending`.
+    Run:
+      allOf:
+        - $ref: "#/components/schemas/DecideResponse"
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [ok, uncertain, pending, resolved, error]
+            resolved_by_human:
+              type: boolean
+              description: Present when a human resolved the run in the review queue.
+            feedback:
+              type: [string, "null"]
+              enum: [good, bad, null]
+            error_code:
+              type: string
+              description: Present when status is `error`.
+            created_at:
+              type: string
+              format: date-time
+    DecisionSummary:
+      type: object
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        type: { type: string, enum: [route, score, classify] }
+        live_version: { type: [integer, "null"] }
+        updated_at: { type: string, format: date-time }
+    DecisionDetail:
+      allOf:
+        - $ref: "#/components/schemas/DecisionSummary"
+        - type: object
+          properties:
+            confidence_threshold: { type: number }
+            uncertainty_policy: { type: string, enum: [uncertain_branch, human_review] }
+            context:
+              type: [object, "null"]
+              properties:
+                description: { type: string }
+                fields:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name: { type: string }
+                      type: { type: string, enum: [string, number, boolean, object, array] }
+                      required: { type: boolean }
+                      pii: { type: boolean }
+                example: {}
+            instructions: { type: [string, "null"] }
+            options:
+              type: array
+              items: { type: string }
+              description: Route decisions — option keys.
+            levels:
+              type: array
+              items: { type: string }
+              description: Score decisions — level labels, lowest first.
+            labels:
+              type: array
+              items: { type: string }
+              description: Classify decisions — label keys.
     Error:
       type: object
       required: [error]

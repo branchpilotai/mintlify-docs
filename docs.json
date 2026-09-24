@@ -70,7 +70,7 @@
             "openapi": "openapi.yaml",
             "groups": [
               { "group": "Basics", "pages": ["en/api/authentication", "en/api/errors"] },
-              { "group": "Endpoints", "pages": ["POST /decide/{slug}"] }
+              { "group": "Endpoints", "pages": ["POST /decide/{slug}", "GET /runs/{run_id}", "POST /runs/{run_id}/feedback", "GET /decisions", "GET /decisions/{slug}"] }
             ]
           }
         ]
@@ -95,7 +95,7 @@
             "openapi": "openapi.yaml",
             "groups": [
               { "group": "Bases", "pages": ["fr/api/authentication", "fr/api/errors"] },
-              { "group": "Endpoints", "pages": ["POST /decide/{slug}"] }
+              { "group": "Endpoints", "pages": ["POST /decide/{slug}", "GET /runs/{run_id}", "POST /runs/{run_id}/feedback", "GET /decisions", "GET /decisions/{slug}"] }
             ]
           }
         ]
