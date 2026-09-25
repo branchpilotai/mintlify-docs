@@ -1,11 +1,40 @@
 ---
 title: Make
-description: Use Branch Pilot in a Make scenario with the HTTP module, or with the Branch Pilot app when it lands.
+description: The Branch Pilot app for Make — decide with a decision of your account, or create one from the module.
 ---
 
 <Note>
-An official Branch Pilot app for Make (modules *Make a decision*, *Send feedback*, *Get run*) is in preparation. Until it is listed, the HTTP module below does the job.
+The Branch Pilot app is shared with an **invite link** until Make lists it publicly. Without it, the HTTP module at the end of this page does the job.
 </Note>
+
+## With the Branch Pilot app
+
+<Steps>
+  <Step title="Connect">
+    Add the **Branch Pilot → Make a decision** module and create a connection with an API key (Branch Pilot → Settings → API keys).
+  </Step>
+  <Step title="Pick or create the decision">
+    The **Decision** field offers four sources:
+
+    - **Use an existing decision** — one of your account. The input fields are generated from its declared context.
+    - **Create from a template** — a ready-made decision of the catalogue (lead routing, ticket triage, sentiment…), with its test cases. The input fields come from the template.
+    - **Create a new decision** — a name, a type (route, score or classify), the options / levels / labels with one sentence each, and the question asked about the input.
+    - **Describe it in a sentence** — a name and a description in your own words. Branch Pilot drafts the options and the question, in the language of the description.
+
+    A decision created from the module appears in your account **the first time the scenario runs**, then the scenario reuses it: the name identifies it. Refine the options, the reference examples and the confidence threshold in Branch Pilot, not in the module.
+  </Step>
+  <Step title="Route on the answer">
+    Add a **Router** after the module. On each route, filter on `choice`: equal to `sales`, `support`, `spam`… and one route for `__uncertain__`. For score decisions filter on `score` (0–100); for classify decisions, on `labels` containing a label. `decision_created` is true on the run that created the decision, with `decision_url` pointing to it.
+  </Step>
+</Steps>
+
+<Warning>
+On the Free plan, three decisions can be live at a time. A decision created beyond that limit stays a **draft** and the module stops with an explicit error: upgrade, then publish it in Branch Pilot.
+</Warning>
+
+<Tip>
+Every source calls the same endpoints: `POST /decisions` (create or reuse) then `POST /decide/{slug}`. Any client can do the same.
+</Tip>
 
 ## With the HTTP module
 
