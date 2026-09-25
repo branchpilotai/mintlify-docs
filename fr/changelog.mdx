@@ -3,6 +3,11 @@ title: Changelog
 description: Ce qui a changé dans Branch Pilot.
 ---
 
+<Update label="Prochaine version" description="App Make et node n8n">
+  - **App Make** et **node n8n** : le module *Make a decision* (et l'opération *Decide*) permet de choisir une décision de votre compte ou d'**en créer une depuis le module** — depuis un template, une définition, ou une description en une phrase rédigée par l'IA. La décision est créée dans votre compte à la première exécution, puis réutilisée.
+  - `POST /decisions` (créer ou réutiliser une décision), `GET /templates` et `GET /templates/{key}` dans l'API REST.
+</Update>
+
 <Update label="Septembre 2026" description="Preview privée">
   - Décisions de type **route**, **score** et **classify**, avec éditeur sans code, brouillons, publication et retour arrière.
   - Moteur **Jev** (TypeSafe AI) avec secours **Mistral** automatique ; politique de moteur par décision et forçage par appel.
