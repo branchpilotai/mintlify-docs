@@ -1,11 +1,40 @@
 ---
 title: Make
-description: Utiliser Branch Pilot dans un scénario Make avec le module HTTP, ou avec l'app Branch Pilot à sa sortie.
+description: L'app Branch Pilot pour Make — décider avec une décision de votre compte, ou en créer une depuis le module.
 ---
 
 <Note>
-Une app Branch Pilot officielle pour Make (modules *Make a decision*, *Send feedback*, *Get run*) est en préparation. En attendant sa publication, le module HTTP ci-dessous fait le travail.
+L'app Branch Pilot est partagée par **lien d'invitation** jusqu'à sa publication dans le catalogue Make. Sans elle, le module HTTP en bas de page fait le travail.
 </Note>
+
+## Avec l'app Branch Pilot
+
+<Steps>
+  <Step title="Connectez">
+    Ajoutez le module **Branch Pilot → Make a decision** et créez une connexion avec une clé API (Branch Pilot → Réglages → Clés API).
+  </Step>
+  <Step title="Choisissez ou créez la décision">
+    Le champ **Decision** propose quatre sources :
+
+    - **Use an existing decision** — une décision de votre compte. Les champs d'entrée sont générés depuis son contexte déclaré.
+    - **Create from a template** — une décision prête à l'emploi du catalogue (routage de leads, tri de tickets, sentiment…), avec ses cas de test. Les champs d'entrée viennent du template.
+    - **Create a new decision** — un nom, un type (route, score ou classify), les options / niveaux / étiquettes avec une phrase chacun, et la question posée sur l'entrée.
+    - **Describe it in a sentence** — un nom et une description avec vos mots. Branch Pilot rédige les options et la question, dans la langue de la description.
+
+    Une décision créée depuis le module apparaît dans votre compte **à la première exécution du scénario**, puis le scénario la réutilise : le nom l'identifie. Affinez les options, les exemples de référence et le seuil de confiance dans Branch Pilot, pas dans le module.
+  </Step>
+  <Step title="Routez sur la réponse">
+    Ajoutez un **Router** après le module. Sur chaque route, filtrez sur `choice` : égal à `sales`, `support`, `spam`… et une route pour `__uncertain__`. Pour une décision score, filtrez sur `score` (0–100) ; pour une classification, sur `labels` contenant une étiquette. `decision_created` vaut vrai lors de l'exécution qui a créé la décision, avec `decision_url` qui pointe vers elle.
+  </Step>
+</Steps>
+
+<Warning>
+Sur le plan Free, trois décisions peuvent être en ligne à la fois. Une décision créée au-delà reste en **brouillon** et le module s'arrête avec une erreur explicite : passez au plan supérieur, puis publiez-la dans Branch Pilot.
+</Warning>
+
+<Tip>
+Chaque source appelle les mêmes endpoints : `POST /decisions` (créer ou réutiliser) puis `POST /decide/{slug}`. N'importe quel client peut faire de même.
+</Tip>
 
 ## Avec le module HTTP
 

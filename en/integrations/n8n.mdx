@@ -1,11 +1,36 @@
 ---
 title: n8n
-description: Use Branch Pilot in an n8n workflow with the HTTP Request node, or with the community node when it lands.
+description: The Branch Pilot community node for n8n — decide with a decision of your account, or create one from the node.
 ---
 
 <Note>
-A community node `n8n-nodes-branchpilot` (operations *Decide*, *Feedback*, *Get run*) is in preparation. Until it is published, the HTTP Request node below does the job.
+The community node `n8n-nodes-branchpilot` is being submitted to the n8n catalogue. Until it is published there, install it as a community node from npm, or use the HTTP Request node at the end of this page.
 </Note>
+
+## With the Branch Pilot node
+
+<Steps>
+  <Step title="Install and connect">
+    n8n → Settings → Community nodes → Install `n8n-nodes-branchpilot`. Add a **Branch Pilot** node, operation **Decide**, with a Branch Pilot API credential (API key from Branch Pilot → Settings → API keys).
+  </Step>
+  <Step title="Pick or create the decision">
+    The **Decision** field offers four sources:
+
+    - **Use an existing decision** — one of your account, picked from the list or given as a slug by expression.
+    - **Create from a template** — a ready-made decision of the catalogue, with its test cases.
+    - **Create a new decision** — a name, a type, the options / levels / labels with one sentence each, and the question asked about the input.
+    - **Describe it in a sentence** — a name and a description in your own words. Branch Pilot drafts the options and the question.
+
+    A decision created from the node appears in your account **on the first execution**, then is reused: the name identifies it. Refine it in Branch Pilot, not in the node. The **Input** defaults to the incoming item (`{{ $json }}`); map an object matching the decision's fields, or free text.
+  </Step>
+  <Step title="Branch on the answer">
+    Add a **Switch** node on `{{ $json.choice }}` with one output per option and one for `__uncertain__`. For score decisions, use a Switch on number ranges of `{{ $json.score }}`; for classify decisions, an **IF** node per label with `{{ $json.labels.includes('billing') }}`. `decision_created` is true on the execution that created the decision, with `decision_url`.
+  </Step>
+</Steps>
+
+<Warning>
+On the Free plan, three decisions can be live at a time. A decision created beyond that limit stays a **draft** and the node fails with an explicit message: upgrade, then publish it in Branch Pilot.
+</Warning>
 
 ## With the HTTP Request node
 

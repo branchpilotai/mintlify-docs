@@ -21,6 +21,7 @@ tags:
   - name: Decide
   - name: Runs
   - name: Decisions
+  - name: Templates
 paths:
   /decide/{slug}:
     post:
@@ -178,6 +179,102 @@ paths:
                       $ref: "#/components/schemas/DecisionSummary"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createDecision
+      tags: [Decisions]
+      summary: Create a decision
+      description: |
+        Creates a decision and publishes its version 1, from one of three shapes told apart by the
+        fields present: a catalogue template (`template`), a one-sentence description drafted by the
+        LLM (`describe`), or an explicit definition (`name`, `type`, `instructions` and the
+        `options` / `levels` / `labels`).
+
+        Idempotent on the slug (given, or derived from the name): when the decision already exists it
+        is returned untouched with `created: false`. A connector configuration therefore always maps
+        to the same decision, created on the first run, and the app stays the source of truth.
+
+        When the plan's live-decision limit is reached, the decision is created as a draft:
+        `status` is `draft`, `publish_error` is `plan_limit` and `message` says what to do.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDecisionRequest"
+            examples:
+              template:
+                summary: From a template
+                value: { template: lead-routing, name: Lead routing EU }
+              describe:
+                summary: Drafted from a description
+                value: { describe: "Route inbound emails to sales, support or spam.", name: Email routing }
+              definition:
+                summary: Explicit definition
+                value:
+                  name: Ticket triage
+                  type: route
+                  instructions: Which team should handle this ticket?
+                  context:
+                    description: A support ticket
+                    fields:
+                      - { name: subject, type: string, required: true }
+                      - { name: body, type: string, required: true }
+                      - { name: email, type: string, required: false, pii: true }
+                  options:
+                    - { key: billing, description: The customer asks about an invoice, a payment or a refund. }
+                    - { key: technical, description: The customer reports a bug or an error. }
+                    - { key: other, description: Anything else. }
+      responses:
+        "201":
+          description: The decision was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDecisionResponse"
+        "200":
+          description: A decision with this slug already existed and is returned as is.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateDecisionResponse"
+        "400":
+          description: Invalid JSON, or invalid definition (`details` lists the problems).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Unknown template.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: The LLM could not draft a valid definition from the description (`generation_failed`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Rate limit of the key reached (`Retry-After` header).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "502":
+          description: The LLM did not answer (`generation_failed`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: Decision generation is not configured on this environment (`generation_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /decisions/{slug}:
     get:
       operationId: getDecision
@@ -193,6 +290,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DecisionDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /templates:
+    get:
+      operationId: listTemplates
+      tags: [Templates]
+      summary: List templates
+      description: The catalogue of ready-made decisions, for connectors and for `POST /decisions`.
+      parameters:
+        - $ref: "#/components/parameters/locale"
+      responses:
+        "200":
+          description: The templates.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  locale: { type: string, enum: [en, fr] }
+                  templates:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TemplateSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /templates/{key}:
+    get:
+      operationId: getTemplate
+      tags: [Templates]
+      summary: Get a template
+      description: Declared context fields, question and options of a template — what a connector needs to build dynamic fields before the decision exists.
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+            example: lead-routing
+        - $ref: "#/components/parameters/locale"
+      responses:
+        "200":
+          description: The template.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -213,6 +358,15 @@ components:
         type: string
         pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
         example: lead-routing
+    locale:
+      name: locale
+      in: query
+      required: false
+      description: Locale of the template texts.
+      schema:
+        type: string
+        enum: [en, fr]
+        default: en
     runId:
       name: run_id
       in: path
@@ -388,6 +542,165 @@ components:
               type: array
               items: { type: string }
               description: Classify decisions — label keys.
+    DefinitionItem:
+      description: An option, a level or a label. A plain string is both the key and the description.
+      oneOf:
+        - type: string
+        - type: object
+          properties:
+            key: { type: string, description: "Identifier, normalized when needed (\"Sales team\" → sales-team). Levels use `label` instead." }
+            label: { type: string, description: Levels — short human name. }
+            description: { type: string, description: One sentence saying when the item applies. }
+            threshold: { type: number, description: Labels — probability above which the label is retained (default 0.5). }
+    CreateDecisionRequest:
+      type: object
+      description: One of three shapes, told apart by the fields present — `template`, `describe`, or a definition.
+      properties:
+        name:
+          type: string
+          maxLength: 120
+          description: Required with a definition. Optional with a template (its name by default) or a description (drafted otherwise). The slug is derived from it, so the same name always maps to the same decision.
+        slug:
+          type: string
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          maxLength: 64
+          description: Explicit identifier; derived from the name by default.
+        description:
+          type: string
+        publish:
+          type: boolean
+          default: true
+          description: Publish version 1 right away.
+        template:
+          type: string
+          description: Key of a catalogue template (see `GET /templates`).
+        locale:
+          type: string
+          enum: [en, fr]
+          default: en
+          description: Locale of the template.
+        describe:
+          type: string
+          maxLength: 2000
+          description: What the decision should do, in plain words. The options and the question are drafted by the LLM in the language of the description; `type` may be imposed.
+        type:
+          type: string
+          enum: [route, score, classify]
+          description: Required with a definition, optional with `describe`.
+        instructions:
+          type: string
+          description: Definition — the closed question asked about the input.
+        context:
+          type: object
+          description: Definition — what the input contains and, optionally, its declared fields.
+          properties:
+            description: { type: string }
+            fields:
+              type: array
+              items:
+                type: object
+                required: [name]
+                properties:
+                  name: { type: string }
+                  type: { type: string, enum: [string, number, boolean, object, array], default: string }
+                  required: { type: boolean, default: false }
+                  pii: { type: boolean, default: false, description: Replaced by a token before any model call. }
+                  description: { type: string }
+        options:
+          type: array
+          items: { $ref: "#/components/schemas/DefinitionItem" }
+          description: Route decisions — 2 to 255 options. Also accepted as one comma- or line-separated string.
+        levels:
+          type: array
+          items: { $ref: "#/components/schemas/DefinitionItem" }
+          description: Score decisions — 2 to 10 levels, lowest first.
+        labels:
+          type: array
+          items: { $ref: "#/components/schemas/DefinitionItem" }
+          description: Classify decisions — 1 to 50 labels.
+    CreateDecisionResponse:
+      type: object
+      required: [slug, name, type, created, status, live_version, url]
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [route, score, classify] }
+        description: { type: string }
+        created:
+          type: boolean
+          description: "`false` when a decision with this slug already existed and is returned untouched."
+        status:
+          type: string
+          enum: [live, draft]
+        live_version: { type: [integer, "null"] }
+        url:
+          type: string
+          format: uri
+          description: The decision in the app.
+        options:
+          type: array
+          items: { type: string }
+          description: Route decisions — option keys.
+        levels:
+          type: array
+          items: { type: string }
+          description: Score decisions — level labels, lowest first.
+        labels:
+          type: array
+          items: { type: string }
+          description: Classify decisions — label keys.
+        publish_error:
+          type: string
+          enum: [plan_limit]
+          description: Present when version 1 could not be published.
+        message:
+          type: string
+          description: Present when the decision is not live — what to do next.
+        upgrade_url:
+          type: string
+          format: uri
+    TemplateSummary:
+      type: object
+      properties:
+        key: { type: string }
+        type: { type: string, enum: [route, score, classify] }
+        name: { type: string }
+        description: { type: string }
+        use_case: { type: string }
+        featured: { type: boolean }
+        options:
+          type: array
+          items: { type: string }
+        levels:
+          type: array
+          items: { type: string }
+        labels:
+          type: array
+          items: { type: string }
+    TemplateDetail:
+      allOf:
+        - $ref: "#/components/schemas/TemplateSummary"
+        - type: object
+          properties:
+            context:
+              type: [object, "null"]
+              properties:
+                description: { type: string }
+                fields:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name: { type: string }
+                      type: { type: string, enum: [string, number, boolean, object, array] }
+                      required: { type: boolean }
+                      pii: { type: boolean }
+                      description: { type: string }
+                example: {}
+            instructions: { type: string }
+            test_cases:
+              type: integer
+              description: Number of test cases cloned with the template.
     Error:
       type: object
       required: [error]
