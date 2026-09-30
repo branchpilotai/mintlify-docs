@@ -542,6 +542,11 @@ components:
               type: array
               items: { type: string }
               description: Classify decisions — label keys.
+            form_fields:
+              type: array
+              description: Input form for no-code connectors — the declared context fields in Make's parameter syntax, or a single required `freeText` field when the decision takes free text.
+              items:
+                $ref: "#/components/schemas/FormField"
     DefinitionItem:
       description: An option, a level or a label. A plain string is both the key and the description.
       oneOf:
@@ -698,9 +703,31 @@ components:
                       description: { type: string }
                 example: {}
             instructions: { type: string }
+            form_fields:
+              type: array
+              description: Input form for no-code connectors — the declared context fields in Make's parameter syntax, or a single required `freeText` field when the decision takes free text.
+              items:
+                $ref: "#/components/schemas/FormField"
             test_cases:
               type: integer
               description: Number of test cases cloned with the template.
+    FormField:
+      type: object
+      description: One field of the connectors' input form (Make parameter syntax).
+      required: [name, type, label, required, help]
+      properties:
+        name:
+          type: string
+          description: Declared field name, or `freeText` for a free-text decision.
+        type:
+          type: string
+          enum: [text, number, boolean, any]
+          description: "`text`, `number` and `boolean` for the matching declared types; `any` for object and array fields, and for `freeText`."
+        label: { type: string }
+        required: { type: boolean }
+        help:
+          type: string
+          description: The field's description, a personal-data notice for PII fields, or the free-text hint.
     Error:
       type: object
       required: [error]
