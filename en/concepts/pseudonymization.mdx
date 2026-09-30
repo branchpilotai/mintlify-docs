@@ -31,11 +31,21 @@ The decision (route to sales, score the urgency) depends on the content of the m
     - **Standard** — emails, phone numbers (French and international formats), IBANs, French social security numbers, URLs and dates of birth are detected and replaced.
     - **Strict** — also replaces any number of 6 or more digits (contract numbers, customer ids).
 
-    Detection is not perfect on proper names. Declare the fields that carry names rather than relying on detection.
+    Detection does not recognize people's names: a name in free text is sent as is, unless the same value comes from a declared field, in which case it is replaced wherever it appears. Declare the fields that carry names.
   </Step>
 </Steps>
 
 The playground always shows the payload exactly as it was sent to the model, and every response carries `pii_redacted`, the number of substitutions performed.
+
+## What is stored as you type it
+
+Runs keep the pseudonymized payload only. Three things are stored as you enter them, in the European Union, for the life of the account:
+
+- the **criteria** of a decision (question, context description, options, levels, labels), sent to the engines as written;
+- the **example payload** of the context, which never leaves your account;
+- your **test cases** and **reference examples**, pseudonymized like any payload before they reach an engine.
+
+Use fictitious data in examples and test cases, and keep personal data out of criteria.
 
 <Warning>
 A piece of identifying information that detection does not recognize in free text (for example "my neighbour at 12 rue X") is sent as is. Pseudonymization strongly reduces the risk; it does not remove it. Pseudonymized payloads are processed by TypeSafe AI in the United States under a data processing agreement and standard contractual clauses — see the [privacy policy](https://branchpilot.ai/privacy).

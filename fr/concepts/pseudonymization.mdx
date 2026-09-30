@@ -31,11 +31,21 @@ La décision (router vers les ventes, scorer l'urgence) dépend du contenu du me
     - **Standard** — emails, numéros de téléphone (formats français et internationaux), IBAN, numéros de sécurité sociale français, URL et dates de naissance sont détectés et remplacés.
     - **Stricte** — remplace aussi tout nombre de 6 chiffres ou plus (numéros de contrat, identifiants clients).
 
-    La détection n'est pas parfaite sur les noms propres. Déclarez les champs qui portent des noms plutôt que de compter sur la détection.
+    La détection ne reconnaît pas les noms de personnes : un nom dans le texte libre part tel quel, sauf si la même valeur vient d'un champ déclaré, auquel cas elle est remplacée partout où elle apparaît. Déclarez les champs qui portent des noms.
   </Step>
 </Steps>
 
 Le playground affiche toujours le payload exactement tel qu'il a été envoyé au modèle, et chaque réponse porte `pii_redacted`, le nombre de substitutions effectuées.
+
+## Ce qui est conservé tel que saisi
+
+Les exécutions ne conservent que le payload pseudonymisé. Trois choses sont conservées telles que vous les saisissez, dans l'Union européenne, pendant la vie du compte :
+
+- les **critères** d'une décision (question, description du contexte, options, niveaux, labels), envoyés aux moteurs tels qu'écrits ;
+- l'**exemple de payload** du contexte, qui ne quitte jamais votre compte ;
+- vos **cas de test** et **exemples de référence**, pseudonymisés comme n'importe quel payload avant d'atteindre un moteur.
+
+Utilisez des données fictives dans les exemples et les cas de test, et gardez les données personnelles hors des critères.
 
 <Warning>
 Une information identifiante que la détection ne reconnaît pas dans le texte libre (par exemple « mon voisin du 12 rue X ») part telle quelle. La pseudonymisation réduit fortement le risque ; elle ne le supprime pas. Les payloads pseudonymisés sont traités par TypeSafe AI aux États-Unis dans le cadre d'un accord de traitement des données et de clauses contractuelles types — voir la [politique de confidentialité](https://branchpilot.ai/fr/privacy).
